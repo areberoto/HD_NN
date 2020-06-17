@@ -22,40 +22,42 @@ int argmax(Matrix& mtx);
 int main()
 {
     cout << "\tSHALLOW NEURAL NETWORK FOR HANDWRITTEN DIGITS RECOGNITION" << endl;
-    int num_images{ 50 };
+    int num_images{ 30 };
     int* sizes = new int[3] {784, 30, 10};
 
-    /*Network NN{ sizes };   
-    cout << "\nTraining..." << endl;
-    NN.SGD(30, 100, 3.0f);*/
+    //Network NN{ sizes };   
+    //cout << "\nTraining..." << endl;
+    //NN.SGD(30, 100, 3.0f);
 
     Network classifier{ sizes };
     classifier.loadWeightsBiases();
 
     MNIST_DS test{ false };
+    test.shuffle();
 
     Matrix ima{};
     Matrix lab{};
     Matrix result{};
 
-    Mat image = Mat::zeros(500, 1400, CV_8UC3);
-    for (size_t k{ 0 }; k < num_images; k++) {
+    Mat image = Mat::zeros(28 * num_images + 60, 28 * num_images, CV_8UC3);
+    for (size_t k{ 0 }; k < num_images / 2; k++) {
+        for (size_t l{ 0 }; l < num_images; l++) {
+            ima = test.getImage(k * num_images + l);
+            lab = test.getLabel(k * num_images + l);
+            int y = argmax(lab);
+            result = classifier.feedforward(ima);
+            int r = argmax(result);
 
-        ima = test.getImage(k);
-        lab = test.getLabel(k);
-        int y = argmax(lab);
-        result = classifier.feedforward(ima);
-        int r = argmax(result);
+            for (size_t i{ 0 }; i < 28; i++) {
+                for (size_t j{ 0 }; j < 28; j++)
+                    circle(image, Point(j + (l * 28), i + (2 * k * num_images)), 0, Scalar(ima[i * 28 + j], ima[i * 28 + j], ima[i * 28 + j]), 0);
+            }
 
-        for (size_t i{ 0 }; i < 28; i++) {
-            for (size_t j{ 0 }; j < 28; j++)
-                circle(image, Point(j + (k * 28), i), 0, Scalar(ima[i * 28 + j], ima[i * 28 + j], ima[i * 28 + j]), 0);
+            if (y == r)
+                putText(image, std::to_string(r), Point(l * 28, 56 + (2 * k * num_images)), FONT_HERSHEY_DUPLEX, 1.0, Scalar(0, 255, 0), 1);
+            else
+                putText(image, std::to_string(r), Point(l * 28, 56 + (2 * k * num_images)), FONT_HERSHEY_DUPLEX, 1.0, Scalar(0, 0, 255), 1);
         }
-
-        if(y == r)
-            putText(image, std::to_string(r), Point(k * 28, 56), FONT_HERSHEY_DUPLEX, 1.0, Scalar(0, 255, 0), 1);
-        else
-            putText(image, std::to_string(r), Point(k * 28, 56), FONT_HERSHEY_DUPLEX, 1.0, Scalar(0, 0, 255), 1);
     }
     
     imshow("Display Window", image);
